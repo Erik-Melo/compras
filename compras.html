@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Lista de Compras</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <style>
+        body {
+            background: #f3f3f3;
+            color: black;
+        }
+
+        .highlight {
+            background-color: #FFA500;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-4">
+        <h1>Lista de Compras</h1>
+
+        <div class="row">
+            <div class="col-md-6">
+                <form id="addItemForm">
+                    <div class="form-group">
+                        <label for="productName">Nome do Produto (até 150 caracteres):</label>
+                        <input type="text" class="form-control" id="productName" maxlength="150">
+                    </div>
+                    <div class="form-group">
+                        <label for="productPrice">Valor Unitário:</label>
+                        <input type="number" class="form-control" id="productPrice" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="productQuantity">Quantidade:</label>
+                        <input type="number" class "form-control" id="productQuantity" step="0.01">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Adicionar</button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <h3>Itens na Lista</h3>
+                <table id="itemTable" class="table">
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Valor Unitário</th>
+                            <th>Quantidade</th>
+                            <th>Valor Total</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <h3>Resumo da Compra</h3>
+                <div class="form-group">
+                    <label for="storeName">Supermercado:</label>
+                    <input type="text" class="form-control" id="storeName">
+                </div>
+                <div class="form-group">
+                    <label for="purchaseDate">Data da Compra:</label>
+                    <input type="date" class="form-control" id="purchaseDate">
+                </div>
+                <button type="button" class="btn btn-primary" id="insertButton">Inserir Informações</button>
+                <button type="button" class="btn btn-success" id="finalizeButton">Finalizar Compra</button>
+                <div id="purchaseSummary" class="mt-4">
+                    <p><strong>Supermercado:</strong> <span id="storeNameDisplay">Não especificado</span></p>
+                    <p><strong>Data da Compra:</strong> <span id="purchaseDateDisplay">Não especificada</span></p>
+                    <p><strong>Valor Total da Compra:</strong> <span id="totalValueDisplay"
+                            class="highlight">0.00</span></p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h3>Texto da Lista de Compras</h3>
+                <textarea id="shoppingListText" class="form-control" rows="5" readonly></textarea>
+                <button type="button" class="btn btn-primary mt-3" id="copyButton">Copiar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            const itemTable = $('#itemTable').DataTable();
+            let totalValue = 0;
+
+            $('#addItemForm').submit(function (e) {
+                e.preventDefault();
+                const productName = $('#productName').val();
+                const productPrice = parseFloat($('#productPrice').val());
+                const productQuantity = parseFloat($('#productQuantity').val());
+                const totalValue = (productPrice * productQuantity).toFixed(2);
+
+                itemTable.row.add([productName, productPrice.toFixed(2), productQuantity.toFixed(2), totalValue]).draw();
+                updateTotalValue(parseFloat(totalValue));
+                clearItemForm();
+            });
+
+            $('#finalizeButton').click(function () {
+                const storeName = $('#storeName').val() || 'Não especificado';
+                const purchaseDate = $('#purchaseDate').val() || 'Não especificada';
+                $('#storeNameDisplay').text(storeName);
+                $('#purchaseDateDisplay').text(purchaseDate);
+                $('#shoppingListText').val(generateShoppingList(storeName, purchaseDate, totalValue));
+            });
+
+            $('#insertButton').click(function () {
+                const storeName = $('#storeName').val() || 'Não especificado';
+                const purchaseDate = $('#purchaseDate').val() || 'Não especificada';
+                $('#storeNameDisplay').text(storeName);
+                $('#purchaseDateDisplay').text(purchaseDate);
+            });
+
+            $('#copyButton').click(function () {
+                const shoppingListText = document.getElementById('shoppingListText');
+                shoppingListText.select();
+                document.execCommand('copy');
+            });
+
+            function updateTotalValue(value) {
+                totalValue += value;
+                $('#totalValueDisplay').text(totalValue.toFixed(2));
+            }
+
+            function clearItemForm() {
+                $('#productName').val('');
+                $('#productPrice').val('');
+                $('#productQuantity').val('');
+            }
+
+            function generateShoppingList(storeName, purchaseDate, totalValue) {
+                let list = `Lista de Compras\n\n`;
+                list += `Supermercado: ${storeName}\n`;
+                list += `Data da Compra: ${purchaseDate}\n\n`;
+                list += `Itens na Lista:\n`;
+
+                itemTable.rows().every(function () {
+                    const data = this.data();
+                    list += `Produto: ${data[0]}, Valor Unitário: R$ ${data[1]}, Quantidade: ${data[2]}, Valor Total: R$ ${data[3]}\n`;
+                });
+
+                list += `\nValor Total da Compra: R$ ${totalValue.toFixed(2)}`;
+                return list;
+            }
+        });
+    </script>
+</body>
+
+</html>
